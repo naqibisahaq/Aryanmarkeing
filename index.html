@@ -1324,6 +1324,319 @@ openDB().then(async ()=>{
 }).catch(e=>console.error('DB Error:',e));
 
 </script>
+<!-- =========================================================
+ARYAN MARKETING SERVICES — LOGIN SECTION ONLY
+Paste this block once before </body>
+========================================================= -->
+
+<style>
+  #ams-login-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    background: linear-gradient(135deg, #0f2540, #1a3a5c);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+
+  #ams-login-card {
+    width: 100%;
+    max-width: 420px;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+    overflow: hidden;
+  }
+
+  #ams-login-header {
+    background: #0f2540;
+    color: #ffffff;
+    padding: 22px 24px;
+  }
+
+  #ams-login-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #f0a040;
+  }
+
+  #ams-login-header p {
+    margin: 6px 0 0;
+    font-size: 13px;
+    color: rgba(255,255,255,0.75);
+  }
+
+  #ams-login-body {
+    padding: 24px;
+  }
+
+  .ams-login-group {
+    margin-bottom: 16px;
+  }
+
+  .ams-login-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a2a3a;
+  }
+
+  .ams-login-group input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid #dde3ee;
+    border-radius: 7px;
+    font-size: 14px;
+    color: #1a2a3a;
+    background: #fafbfc;
+    outline: none;
+    font-family: inherit;
+  }
+
+  .ams-login-group input:focus {
+    border-color: #e07b20;
+    background: #ffffff;
+  }
+
+  #ams-login-error {
+    display: none;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    background: #fde8e8;
+    color: #721c24;
+    border-left: 4px solid #e74c3c;
+  }
+
+  #ams-login-button {
+    width: 100%;
+    padding: 10px 18px;
+    border-radius: 7px;
+    font-size: 14px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    background: #1a3a5c;
+    color: #ffffff;
+    transition: all 0.18s;
+  }
+
+  #ams-login-button:hover {
+    background: #254f7a;
+  }
+
+  #ams-logout-button {
+    position: fixed;
+    right: 18px;
+    top: 72px;
+    z-index: 999998;
+    border: none;
+    background: #e74c3c;
+    color: #ffffff;
+    border-radius: 999px;
+    padding: 7px 13px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: none;
+    box-shadow: 0 2px 12px rgba(26,58,92,0.18);
+  }
+
+  #ams-logout-button:hover {
+    background: #c0392b;
+  }
+</style>
+
+<div id="ams-login-screen">
+  <div id="ams-login-card">
+    <div id="ams-login-header">
+      <h2>Aryan Marketing Services</h2>
+      <p>Login to access your business management system</p>
+    </div>
+
+    <div id="ams-login-body">
+      <div id="ams-login-error"></div>
+
+      <div class="ams-login-group">
+        <label for="ams-login-email">Email</label>
+        <input
+          type="email"
+          id="ams-login-email"
+          placeholder="Enter email"
+          autocomplete="username"
+        >
+      </div>
+
+      <div class="ams-login-group">
+        <label for="ams-login-password">Password</label>
+        <input
+          type="password"
+          id="ams-login-password"
+          placeholder="Enter password"
+          autocomplete="current-password"
+        >
+      </div>
+
+      <button id="ams-login-button" type="button" onclick="amsHandleLogin()">
+        Login
+      </button>
+    </div>
+  </div>
+</div>
+
+<button id="ams-logout-button" type="button" onclick="amsHandleLogout()">
+  Logout
+</button>
+
+<script>
+  /*
+    ARYAN MARKETING SERVICES — LOGIN SECTION ONLY
+
+    Paste this block before </body>.
+
+    This only adds a login screen.
+    It does not change your existing database, design, tables, pages, routes, or logic.
+
+    To change login later, edit these two lines:
+    var AMS_LOGIN_EMAIL = "admin@aryanmarketing.com";
+    var AMS_LOGIN_PASSWORD = "admin123";
+  */
+
+  (function () {
+    "use strict";
+
+    var AMS_LOGIN_EMAIL = "isahaq@aryanmarketing.af";
+    var AMS_LOGIN_PASSWORD = "Isahaq@2027";
+    var AMS_LOGIN_SESSION_KEY = "ams_login_active";
+
+    function amsShowLogin() {
+      var loginScreen = document.getElementById("ams-login-screen");
+      var sidebar = document.getElementById("sidebar");
+      var main = document.getElementById("main");
+      var logoutButton = document.getElementById("ams-logout-button");
+
+      if (loginScreen) {
+        loginScreen.style.display = "flex";
+      }
+
+      if (sidebar) {
+        sidebar.style.display = "none";
+      }
+
+      if (main) {
+        main.style.display = "none";
+      }
+
+      if (logoutButton) {
+        logoutButton.style.display = "none";
+      }
+    }
+
+    function amsShowApp() {
+      var loginScreen = document.getElementById("ams-login-screen");
+      var sidebar = document.getElementById("sidebar");
+      var main = document.getElementById("main");
+      var logoutButton = document.getElementById("ams-logout-button");
+
+      if (loginScreen) {
+        loginScreen.style.display = "none";
+      }
+
+      if (sidebar) {
+        sidebar.style.display = "flex";
+      }
+
+      if (main) {
+        main.style.display = "flex";
+      }
+
+      if (logoutButton) {
+        logoutButton.style.display = "block";
+      }
+    }
+
+    function amsSetError(message) {
+      var errorBox = document.getElementById("ams-login-error");
+
+      if (!errorBox) {
+        return;
+      }
+
+      errorBox.textContent = message;
+      errorBox.style.display = "block";
+    }
+
+    function amsClearError() {
+      var errorBox = document.getElementById("ams-login-error");
+
+      if (!errorBox) {
+        return;
+      }
+
+      errorBox.textContent = "";
+      errorBox.style.display = "none";
+    }
+
+    window.amsHandleLogin = function () {
+      var emailInput = document.getElementById("ams-login-email");
+      var passwordInput = document.getElementById("ams-login-password");
+
+      var email = emailInput ? emailInput.value.trim().toLowerCase() : "";
+      var password = passwordInput ? passwordInput.value : "";
+
+      amsClearError();
+
+      if (!email || !password) {
+        amsSetError("Please enter both email and password.");
+        return;
+      }
+
+      if (email === AMS_LOGIN_EMAIL && password === AMS_LOGIN_PASSWORD) {
+        sessionStorage.setItem(AMS_LOGIN_SESSION_KEY, "true");
+        amsShowApp();
+      } else {
+        amsSetError("Invalid email or password.");
+      }
+    };
+
+    window.amsHandleLogout = function () {
+      sessionStorage.removeItem(AMS_LOGIN_SESSION_KEY);
+      amsShowLogin();
+    };
+
+    document.addEventListener("DOMContentLoaded", function () {
+      var emailInput = document.getElementById("ams-login-email");
+      var passwordInput = document.getElementById("ams-login-password");
+
+      if (emailInput) {
+        emailInput.addEventListener("keydown", function (event) {
+          if (event.key === "Enter") {
+            window.amsHandleLogin();
+          }
+        });
+      }
+
+      if (passwordInput) {
+        passwordInput.addEventListener("keydown", function (event) {
+          if (event.key === "Enter") {
+            window.amsHandleLogin();
+          }
+        });
+      }
+
+      if (sessionStorage.getItem(AMS_LOGIN_SESSION_KEY) === "true") {
+        amsShowApp();
+      } else {
+        amsShowLogin();
+      }
+    });
+  })();
+</script>
 </body>
 </html>
 HTMLEOF
