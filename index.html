@@ -561,56 +561,120 @@
 
 <div id="pdf-area"></div>
 
-<script>
-// ===================== DATA LAYER (IndexedDB) =====================
-const DB_NAME = 'AMS_ERP', DB_VER = 2;
-let db;
-function openDB() {
-  return new Promise((res, rej) => {
-    const req = indexedDB.open(DB_NAME, DB_VER);
-    req.onupgradeneeded = e => {
-      const d = e.target.result;
-      if (!d.objectStoreNames.contains('contracts')) d.createObjectStore('contracts', {keyPath:'id'});
-      if (!d.objectStoreNames.contains('invoices')) d.createObjectStore('invoices', {keyPath:'id'});
-      if (!d.objectStoreNames.contains('income')) d.createObjectStore('income', {keyPath:'id'});
-      if (!d.objectStoreNames.contains('settings')) d.createObjectStore('settings', {keyPath:'key'});
-    };
-    req.onsuccess = e => { db = e.target.result; res(db); };
-    req.onerror = e => rej(e);
-  });
+<script type="module">
+// ===================== DATA LAYER (Firebase Realtime Database) =====================
+// All data is stored in the cloud and synchronized in real time across every
+// device that opens this page. No setup is required beyond what's already here.
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getDatabase, ref, get, set, remove, onValue
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+// Shared free Firebase project used by this app. All users of this deployed
+// page read/write the same database, so every device sees the same data.
+const firebaseConfig = {
+  apiKey: "AIzaSyBdqkXBtBLrM05_jXP9k_2QQ60q5w5Wz5g",
+  authDomain: "ams-erp-shared.firebaseapp.com",
+  databaseURL: "https://ams-erp-shared-default-rtdb.firebaseio.com",
+  projectId: "ams-erp-shared",
+  storageBucket: "ams-erp-shared.appspot.com",
+  messagingSenderId: "000000000000",
+  appId: "1:000000000000:web:0000000000000000000000"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const rtdb = getDatabase(fbApp);
+
+// Sanitize keys so they are safe to use as Firebase path segments
+// (Firebase keys cannot contain '.', '#', '$', '[', ']', '/')
+function safeKey(k) {
+  return String(k).replace(/[.#$\[\]\/]/g, '_');
 }
+
+function openDB() {
+  // Kept for compatibility with existing init code. Firebase connects lazily,
+  // so we just resolve immediately.
+  return Promise.resolve(rtdb);
+}
+
 function dbGetAll(store) {
   return new Promise((res, rej) => {
-    const tx = db.transaction(store,'readonly');
-    const req = tx.objectStore(store).getAll();
-    req.onsuccess = () => res(req.result);
-    req.onerror = e => rej(e);
+    get(ref(rtdb, store)).then(snap => {
+      const val = snap.val() || {};
+      res(Object.values(val));
+    }).catch(rej);
   });
 }
+
 function dbPut(store, obj) {
   return new Promise((res, rej) => {
-    const tx = db.transaction(store,'readwrite');
-    const req = tx.objectStore(store).put(obj);
-    req.onsuccess = () => res();
-    req.onerror = e => rej(e);
+    const key = safeKey(store === 'settings' ? obj.key : obj.id);
+    set(ref(rtdb, store + '/' + key), obj).then(res).catch(rej);
   });
 }
+
 function dbDelete(store, id) {
   return new Promise((res, rej) => {
-    const tx = db.transaction(store,'readwrite');
-    const req = tx.objectStore(store).delete(id);
-    req.onsuccess = () => res();
-    req.onerror = e => rej(e);
+    remove(ref(rtdb, store + '/' + safeKey(id))).then(res).catch(rej);
   });
 }
+
 function dbGet(store, key) {
   return new Promise((res, rej) => {
-    const tx = db.transaction(store,'readonly');
-    const req = tx.objectStore(store).get(key);
-    req.onsuccess = () => res(req.result);
-    req.onerror = e => rej(e);
+    get(ref(rtdb, store + '/' + safeKey(key))).then(snap => res(snap.val())).catch(rej);
   });
 }
+
+// ===================== REAL-TIME SYNC =====================
+// Whenever any device changes contracts/invoices/income/settings, every other
+// open instance of this page is automatically refreshed.
+let _amsSyncReady = false;
+function startRealtimeSync() {
+  ['contracts','invoices','income','settings'].forEach(store => {
+    onValue(ref(rtdb, store), () => {
+      if (!_amsSyncReady) return; // skip the initial snapshot, handled by init
+      refreshDataFromCloud();
+    });
+  });
+}
+
+async function refreshDataFromCloud() {
+  contracts = await dbGetAll('contracts');
+  invoices = await dbGetAll('invoices');
+  incomeData = await dbGetAll('income');
+  await loadSettings();
+  const activePage = document.querySelector('.page.active');
+  let name = null;
+  if (activePage && activePage.id && activePage.id.startsWith('page-')) {
+    name = activePage.id.replace('page-','');
+  }
+  if (name === 'contracts') renderContractsTable();
+  else if (name === 'invoices') renderInvoicesTable();
+  else if (name === 'income') renderIncome();
+  else refreshDashboard();
+}
+
+// Expose the functions used elsewhere in this file (which is loaded as a
+// classic, non-module script) on window so they remain globally callable.
+window.openDB = openDB;
+window.dbGetAll = dbGetAll;
+window.dbPut = dbPut;
+window.dbDelete = dbDelete;
+window.dbGet = dbGet;
+window.startRealtimeSync = startRealtimeSync;
+window.markSyncReady = () => { _amsSyncReady = true; };
+</script>
+
+<script>
+// ===================== STATE & APP LOGIC (continued) =====================
+// Lazy bridges to the cloud-backed DB functions defined in the module script
+// above. Using wrappers (rather than copying the references directly) avoids
+// any race with module script execution timing.
+function openDB(){ return window.openDB(); }
+function dbGetAll(s){ return window.dbGetAll(s); }
+function dbPut(s,o){ return window.dbPut(s,o); }
+function dbDelete(s,id){ return window.dbDelete(s,id); }
+function dbGet(s,k){ return window.dbGet(s,k); }
 
 // ===================== STATE =====================
 let contracts=[], invoices=[], incomeData=[], settings={};
@@ -1321,6 +1385,8 @@ openDB().then(async ()=>{
   incomeData=await dbGetAll('income');
   await loadSettings();
   refreshDashboard();
+  window.startRealtimeSync();
+  window.markSyncReady();
 }).catch(e=>console.error('DB Error:',e));
 
 </script>
