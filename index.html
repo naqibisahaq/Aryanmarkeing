@@ -877,7 +877,12 @@ async function generateContractPDF(id){
   doc.text(settings?.address||'',52,29);
   doc.setFillColor(232,137,26);doc.rect(0,40,pw,4,'F');
   doc.setFontSize(18);doc.setFont('helvetica','bold');doc.setTextColor(27,58,92);
-  doc.text('SERVICE CONTRACT',pw/2,58,{align:'center'});
+  doc.setFontSize(18);
+doc.text('SERVICE CONTRACT', pw/2, 58, { align: 'center' });
+
+doc.setFontSize(10);
+doc.text('دا قرارداد د دواړو جانبینو تر منځ لاسلیک کیږي، چې دواړه خواوې ورباندې راضي دي.', pw/2, 65, { align: 'center' });
+  
   doc.setDrawColor(232,137,26);doc.setLineWidth(.5);doc.line(60,62,150,62);
   doc.setTextColor(0,0,0);doc.setFontSize(10);doc.setFont('helvetica','normal');
   const lines=[['Contract ID',c.id],['Company',c.company],['Service Type',c.service],
