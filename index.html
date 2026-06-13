@@ -873,7 +873,7 @@ async function generateContractPDF(id){
   doc.setTextColor(255,255,255);doc.setFontSize(16);doc.setFont('helvetica','bold');
   doc.text(settings?.company||'Aryan Marketing Services',52,16);
   doc.setFontSize(8);doc.setFont('helvetica','normal');
-  doc.text((settings?.phone||'')+' | '+(settings?.email||''),52,23);
+  doc.text((settings?.phone||'')+' Contact +93700343612 | +93797343612 '+(settings?.email||''),52,23);
   doc.text(settings?.address||'',52,29);
   doc.setFillColor(232,137,26);doc.rect(0,40,pw,4,'F');
   doc.setFontSize(18);doc.setFont('helvetica','bold');doc.setTextColor(27,58,92);
